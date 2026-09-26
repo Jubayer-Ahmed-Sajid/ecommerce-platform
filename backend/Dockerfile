@@ -2,9 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy build props, targets, and solution
+# Copy build props, targets, editorconfig, and solution
 COPY Directory.Build.props ./
 COPY Directory.Build.targets ./
+COPY .editorconfig ./
 COPY EcommercePlatform.slnx ./
 
 # Copy all project files for optimized layer caching
