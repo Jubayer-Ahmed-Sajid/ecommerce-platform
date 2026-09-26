@@ -13,7 +13,14 @@ export const metadata: Metadata = {
 
 const DEFAULT_API_BASE_URL = 'http://localhost:5000/api/v1';
 
+let cachedToken: string | null = null;
+let cachedTokenExpiry = 0;
+
 async function getAdminToken(baseUrl: string): Promise<string | null> {
+  const now = Date.now();
+  if (cachedToken && cachedTokenExpiry > now) {
+    return cachedToken;
+  }
   try {
     const res = await fetch(`${baseUrl}/admin/auth/login`, {
       method: 'POST',
@@ -26,7 +33,9 @@ async function getAdminToken(baseUrl: string): Promise<string | null> {
     });
     if (res.ok) {
       const data = await res.json();
-      return data?.token || null;
+      cachedToken = data?.token || null;
+      cachedTokenExpiry = now + 30 * 60 * 1000;
+      return cachedToken;
     }
   } catch {
     // Ignore
@@ -45,21 +54,37 @@ export default async function CustomerOrdersPage() {
   let initialOrders: OrderSummaryDto[] = [];
 
   try {
-    const adminToken = await getAdminToken(baseUrl);
     const searchFilter = user.phoneNumber || user.fullName || '';
 
-    const url = new URL(`${baseUrl}/admin/orders`);
+    // 1. Try public storefront endpoint
+    let url = new URL(`${baseUrl}/orders`);
     if (searchFilter) {
       url.searchParams.set('searchTerm', searchFilter);
     }
     url.searchParams.set('pageSize', '50');
 
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (adminToken) {
-      headers.Authorization = `Bearer ${adminToken}`;
+    let res = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+
+    // 2. Fallback to /admin/orders with admin token
+    if (!res.ok) {
+      const adminToken = await getAdminToken(baseUrl);
+      url = new URL(`${baseUrl}/admin/orders`);
+      if (searchFilter) {
+        url.searchParams.set('searchTerm', searchFilter);
+      }
+      url.searchParams.set('pageSize', '50');
+
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (adminToken) {
+        headers.Authorization = `Bearer ${adminToken}`;
+      }
+
+      res = await fetch(url.toString(), { headers, cache: 'no-store' });
     }
 
-    const res = await fetch(url.toString(), { headers, cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       const rawItems = data.items || [];
@@ -92,7 +117,6 @@ export default async function CustomerOrdersPage() {
         return false;
       });
 
-      // If strict filter yielded empty but query had results, provide them
       if (initialOrders.length === 0 && normalizedItems.length > 0 && searchFilter) {
         initialOrders = normalizedItems;
       }

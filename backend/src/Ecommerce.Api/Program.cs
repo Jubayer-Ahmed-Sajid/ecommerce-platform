@@ -283,6 +283,17 @@ api.MapGet("/orders/{orderId:guid}", async (Guid orderId, IOrdersModule orders) 
         : Results.Problem("Order not found.", statusCode: 404);
 }).WithName("GetOrderById");
 
+api.MapGet("/orders", async (string? searchTerm, int? page, int? pageSize, IOrdersModule orders) =>
+{
+    if (string.IsNullOrWhiteSpace(searchTerm))
+    {
+        return Results.Ok(new PagedResult<OrderSummaryDto>([], 0, 1, 20));
+    }
+    var query = new OrderQueryParameters(null, searchTerm.Trim(), page ?? 1, Math.Clamp(pageSize ?? 20, 1, 50));
+    var result = await orders.ListOrdersAsync(query);
+    return Results.Ok(result);
+}).WithName("ListPublicCustomerOrders");
+
 // --- User / Customer Authentication ---
 var userAuth = api.MapGroup("/auth");
 
