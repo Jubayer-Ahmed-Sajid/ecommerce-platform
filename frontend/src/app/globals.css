@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    --background: 250 250 252;
+    --foreground: 15 17 23;
+    --primary: 15 17 23;
+    --primary-foreground: 255 255 255;
+    --accent: 180 130 60;
+    --card: 255 255 255;
+    --card-foreground: 15 17 23;
+    --border: 228 231 236;
+    --radius: 0.875rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 9 10 13;
+      --foreground: 244 245 248;
+      --primary: 255 255 255;
+      --primary-foreground: 15 17 23;
+      --accent: 212 175 55;
+      --card: 16 18 24;
+      --card-foreground: 244 245 248;
+      --border: 34 37 46;
+    }
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Sophisticated Subtle Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Apple-style Matte Surfaces */
+.apple-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.apple-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
+}
+
+@media (prefers-color-scheme: dark) {
+  .apple-card:hover {
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.65);
+  }
+}
+
+/* Native horizontal scroll without ugly scrollbar */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

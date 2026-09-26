@@ -1,0 +1,82 @@
+name: CI Quality Gates
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-quality-gates:
+    name: Backend (C# / .NET 10) Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Backend Dependencies
+        run: dotnet restore backend/EcommercePlatform.slnx
+
+      - name: Build Backend (0 Warnings as Errors)
+        run: dotnet build backend/EcommercePlatform.slnx --configuration Release --no-restore
+
+      - name: Run Backend Unit & Architecture Tests
+        run: dotnet test backend/EcommercePlatform.slnx --configuration Release --no-build --verbosity normal
+
+  frontend-quality-gates:
+    name: Frontend (Next.js 16 / TypeScript) Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint & Boundary Check (ESLint)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run Frontend Unit & Architecture Tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Build Next.js Production Bundle
+        working-directory: frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: "https://api.example.com/api/v1"
+          NEXT_PUBLIC_APP_NAME: "Modern Commerce Platform"
+
+  security-quality-gates:
+    name: Security & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Verify Zero Committed Secrets
+        run: |
+          echo "Scanning for accidentally committed secret patterns..."
+          if grep -rnwi --exclude-dir={.git,node_modules,bin,obj,.next} "BEGIN RSA PRIVATE KEY" .; then
+            echo "Private key detected in repository!"
+            exit 1
+          fi
+          if grep -rnwi --exclude-dir={.git,node_modules,bin,obj,.next} "AKIA[0-9A-Z]{16}" .; then
+            echo "AWS API key detected in repository!"
+            exit 1
+          fi
+          echo "No forbidden secret patterns found."

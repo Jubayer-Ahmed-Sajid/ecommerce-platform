@@ -1,0 +1,50 @@
+# .NET & Visual Studio
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+*.DotSettings.user
+_ReSharper*/
+packages/
+*.nupkg
+TestResults/
+*.trx
+
+# Node.js & Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.npm
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs & Runtime files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment & Local Secrets
+.env
+.env*.local
+*.local
+appsettings.Local.json
+.vercel/
+scratch/
+
+# Local Uploads
+backend/src/Ecommerce.Api/uploads/*
+!backend/src/Ecommerce.Api/uploads/.gitkeep
+uploads/*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

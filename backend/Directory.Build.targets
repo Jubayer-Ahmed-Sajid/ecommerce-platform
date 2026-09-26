@@ -1,0 +1,5 @@
+<Project>
+  <Target Name="SignAssembliesForSmartAppControl" AfterTargets="CopyFilesToOutputDirectory" Condition="'$([MSBuild]::IsOSPlatform(&quot;Windows&quot;))' == 'true' and Exists('$(TargetPath)')">
+    <Exec Command="powershell -NoProfile -Command &quot;$cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Select-Object -First 1; if ($cert) { Set-AuthenticodeSignature -FilePath '$(TargetPath)' -Certificate $cert | Out-Null }&quot;" IgnoreExitCode="true" />
+  </Target>
+</Project>

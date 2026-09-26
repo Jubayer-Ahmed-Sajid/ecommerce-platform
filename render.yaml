@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ecommerce-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: oregon
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
+      - key: PORT
+        value: 10000
+      - key: ConnectionStrings__DefaultConnection
+        sync: false

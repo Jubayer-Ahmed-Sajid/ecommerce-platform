@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ecommerce.Domain\Ecommerce.Domain.csproj" />
+    <ProjectReference Include="..\Ecommerce.Modules.Catalog\Ecommerce.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\Ecommerce.Modules.Inventory\Ecommerce.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\Ecommerce.Modules.Customers\Ecommerce.Modules.Customers.csproj" />
+    <ProjectReference Include="..\Ecommerce.Modules.Payments\Ecommerce.Modules.Payments.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
