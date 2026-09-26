@@ -36,34 +36,50 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
 
 export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListProps) {
   const [orders, setOrders] = useState<OrderSummaryDto[]>(initialOrders);
-  const [searchQuery, setSearchQuery] = useState(user.phoneNumber || '');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('shopbd_last_phone');
+        if (saved) return saved;
+      } catch {
+        // ignore
+      }
+    }
+    return user.phoneNumber || '';
+  });
   const [isSearching, setIsSearching] = useState(false);
 
-  // Auto-fetch customer orders on mount if initial server list was empty
+  // Auto-fetch customer orders on mount using user phone or last checkout phone
   useEffect(() => {
-    if (initialOrders.length === 0) {
-      let isMounted = true;
-      const query = searchQuery.trim();
-      fetch(`/api/orders/my-orders${query ? `?phone=${encodeURIComponent(query)}` : ''}`)
-        .then((res) => (res.ok ? res.json() : { items: [] }))
-        .then((data) => {
-          if (isMounted && data.items && data.items.length > 0) {
-            setOrders(data.items);
-          }
-        })
-        .catch(() => {});
+    let isMounted = true;
+    const query = searchQuery.trim();
 
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [initialOrders.length, searchQuery]);
+    fetch(`/api/orders/my-orders${query ? `?phone=${encodeURIComponent(query)}` : ''}`)
+      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then((data) => {
+        if (isMounted && data.items && data.items.length > 0) {
+          setOrders(data.items);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchQuery]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSearching(true);
     try {
       const query = searchQuery.trim();
+      if (query && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('shopbd_last_phone', query);
+        } catch {
+          // ignore
+        }
+      }
       const res = await fetch(`/api/orders/my-orders${query ? `?phone=${encodeURIComponent(query)}` : ''}`);
       if (res.ok) {
         const data = await res.json();

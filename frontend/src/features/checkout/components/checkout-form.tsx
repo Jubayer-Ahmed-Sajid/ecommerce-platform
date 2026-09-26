@@ -142,6 +142,11 @@ export function CheckoutForm() {
       if (response && response.orderNumber) {
         clearCart();
         const normalized = normalizeBdPhoneNumber(customerPhone);
+        try {
+          localStorage.setItem('shopbd_last_phone', normalized);
+        } catch {
+          // ignore
+        }
         router.push(`/orders/${encodeURIComponent(response.orderNumber)}?phone=${encodeURIComponent(normalized)}`);
       } else {
         setErrorMessage('Order placement failed. Please verify details and try again.');
