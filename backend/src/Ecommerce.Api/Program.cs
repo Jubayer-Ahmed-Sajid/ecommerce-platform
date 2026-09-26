@@ -73,10 +73,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendCorsPolicy", policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? ["http://localhost:3000"];
-
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+            origin.StartsWith("http://localhost:", StringComparison.OrdinalIgnoreCase) ||
+            origin.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase) ||
+            origin == "https://vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
