@@ -134,6 +134,17 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = baseUrl
 });
 
+// Root status endpoint
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "ShopBD E-Commerce API",
+    status = "Healthy",
+    version = "1.0.0",
+    health = "/health",
+    catalog = "/api/v1/products",
+    categories = "/api/v1/categories"
+})).WithName("RootStatus");
+
 // Health check
 app.MapGet("/health", () => Results.Ok(new HealthStatus("Healthy", DateTimeOffset.UtcNow)))
     .WithName("HealthCheck");
