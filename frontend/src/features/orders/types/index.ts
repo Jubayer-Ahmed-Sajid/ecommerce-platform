@@ -44,8 +44,12 @@ export interface OrderSummaryDto {
   orderNumber: string;
   status: OrderStatus;
   totalAmount: number;
+  createdAt: string;
   createdAtUtc: string;
   customerFullName: string;
   customerPhone: string;
+  totalItems: number;
   totalItemCount: number;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: PaymentStatus;
 }

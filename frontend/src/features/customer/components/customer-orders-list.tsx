@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { OrderSummaryDto } from '@/features/orders/types';
 import type { CustomerUser } from '@/lib/auth/session';
@@ -36,16 +36,35 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
 
 export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListProps) {
   const [orders, setOrders] = useState<OrderSummaryDto[]>(initialOrders);
-  const [phoneFilter, setPhoneFilter] = useState(user.phoneNumber || '');
+  const [searchQuery, setSearchQuery] = useState(user.phoneNumber || '');
   const [isSearching, setIsSearching] = useState(false);
 
-  const handlePhoneSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneFilter.trim()) return;
+  // Auto-fetch customer orders on mount if initial server list was empty
+  useEffect(() => {
+    if (initialOrders.length === 0) {
+      let isMounted = true;
+      const query = searchQuery.trim();
+      fetch(`/api/orders/my-orders${query ? `?phone=${encodeURIComponent(query)}` : ''}`)
+        .then((res) => (res.ok ? res.json() : { items: [] }))
+        .then((data) => {
+          if (isMounted && data.items && data.items.length > 0) {
+            setOrders(data.items);
+          }
+        })
+        .catch(() => {});
 
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [initialOrders.length, searchQuery]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/orders/my-orders?phone=${encodeURIComponent(phoneFilter.trim())}`);
+      const query = searchQuery.trim();
+      const res = await fetch(`/api/orders/my-orders${query ? `?phone=${encodeURIComponent(query)}` : ''}`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data.items || []);
@@ -59,19 +78,19 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
 
   return (
     <div className="space-y-6">
-      {/* Phone sync / Filter bar */}
+      {/* Search / Phone sync bar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <form onSubmit={handlePhoneSearch} className="flex flex-col sm:flex-row items-center gap-3">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
           <div className="flex-1 w-full">
-            <label htmlFor="phoneFilter" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-              Find Orders by Contact Number
+            <label htmlFor="searchQuery" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              Find Orders by Phone or Order ID
             </label>
             <input
-              id="phoneFilter"
-              type="tel"
-              placeholder="e.g. 017XXXXXXXX"
-              value={phoneFilter}
-              onChange={(e) => setPhoneFilter(e.target.value)}
+              id="searchQuery"
+              type="text"
+              placeholder="e.g. 01843278491 or ORD-20260926-5727"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium text-slate-900 transition-colors focus:border-indigo-600 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:border-indigo-500"
             />
           </div>
@@ -80,9 +99,12 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
             disabled={isSearching}
             className="w-full sm:w-auto mt-auto rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:opacity-50"
           >
-            {isSearching ? 'Searching...' : 'Sync Orders'}
+            {isSearching ? 'Searching...' : 'Find My Orders'}
           </button>
         </form>
+        <p className="mt-2 text-[11px] text-slate-400">
+          Tip: Enter the contact number or Order Number used at checkout to link all your orders.
+        </p>
       </div>
 
       {/* Orders List */}
@@ -93,9 +115,13 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
             </svg>
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">No Orders Placed Yet</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            {isSearching ? 'Loading your orders...' : 'No Orders Found'}
+          </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            You haven&apos;t placed any orders yet under this account or phone number.
+            {isSearching
+              ? 'Connecting to the database to retrieve your latest purchases...'
+              : 'Enter your checkout phone number above to find and display your orders.'}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
@@ -120,6 +146,15 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
               className: 'bg-slate-100 text-slate-700 border-slate-200',
             };
             const trackingUrl = `/orders/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.customerPhone)}`;
+            const itemCount = order.totalItems ?? order.totalItemCount ?? 1;
+            const dateStr = order.createdAt || order.createdAtUtc;
+            const formattedDate = dateStr
+              ? new Date(dateStr).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'Recently';
 
             return (
               <div
@@ -138,11 +173,7 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-400">
-                    {new Date(order.createdAtUtc).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {formattedDate}
                   </span>
                 </div>
 
@@ -150,7 +181,7 @@ export function CustomerOrdersList({ initialOrders, user }: CustomerOrdersListPr
                   <div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Items</span>
                     <p className="mt-0.5 font-bold text-slate-900 dark:text-white">
-                      {order.totalItemCount} {order.totalItemCount === 1 ? 'item' : 'items'}
+                      {itemCount} {itemCount === 1 ? 'item' : 'items'}
                     </p>
                   </div>
                   <div>
