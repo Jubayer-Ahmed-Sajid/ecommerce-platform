@@ -578,8 +578,8 @@ public static class EcommerceDbSeeder
             ]
         );
 
-        // 4. Seed Bulk Diverse Catalog Products up to 10,000 items
-        await SeedBulkCatalogProductsAsync(context, targetTotal: 10000, ct: ct);
+        // 4. Seed Bulk Diverse Catalog Products (250 on boot for fast memory-safe startup; use /api/v1/debug/seed-10k for 10k items)
+        await SeedBulkCatalogProductsAsync(context, targetTotal: 250, ct: ct);
     }
 
     private sealed record ProductTemplate(

@@ -86,8 +86,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // 2. Database Initialization & Seeding on Startup
-using (var scope = app.Services.CreateScope())
+try
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<EcommerceDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
@@ -101,6 +102,10 @@ using (var scope = app.Services.CreateScope())
     }
 
     await EcommerceDbSeeder.SeedAsync(dbContext, passwordHasher);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"[Startup Warning] Database initialization: {ex.Message}");
 }
 
 // 3. Middleware Pipeline

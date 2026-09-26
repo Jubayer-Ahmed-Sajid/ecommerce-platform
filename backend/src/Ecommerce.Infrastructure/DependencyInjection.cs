@@ -18,12 +18,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-        if (!string.IsNullOrWhiteSpace(connectionString) && !connectionString.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionStrings__DefaultConnection"]
+            ?? configuration["ConnectionStrings:DefaultConnection"];
+
+        var isInMemory = string.IsNullOrWhiteSpace(connectionString)
+            || connectionString.Trim().Equals("InMemory", StringComparison.OrdinalIgnoreCase)
+            || connectionString.Trim().Trim('"').Equals("InMemory", StringComparison.OrdinalIgnoreCase);
+
+        if (!isInMemory && connectionString != null)
         {
             services.AddDbContext<EcommerceDbContext>(options =>
             {
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
             });
         }
         else
