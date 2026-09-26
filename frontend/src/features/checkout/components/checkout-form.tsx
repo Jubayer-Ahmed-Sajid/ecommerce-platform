@@ -52,17 +52,7 @@ export function CheckoutForm() {
         if (user.email) setCustomerEmail((prev) => prev ? prev : user.email);
       })
       .catch(() => {
-        try {
-          const stored = localStorage.getItem('shopbd_user');
-          if (stored) {
-            const u = JSON.parse(stored);
-            if (u.fullName) setCustomerFullName((prev) => prev ? prev : u.fullName);
-            if (u.phoneNumber) setCustomerPhone((prev) => prev ? prev : (u.phoneNumber || ''));
-            if (u.email) setCustomerEmail((prev) => prev ? prev : u.email);
-          }
-        } catch {
-          // Ignore
-        }
+        // Unauthenticated customer
       });
   }, []);
 

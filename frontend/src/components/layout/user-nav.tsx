@@ -12,44 +12,32 @@ export function UserNav() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Verify session with backend asynchronously
-    authApi
-      .getCurrentUser()
-      .then((profile) => {
-        setUser(profile);
-        localStorage.setItem('shopbd_user', JSON.stringify(profile));
-      })
-      .catch(() => {
-        try {
-          const stored = localStorage.getItem('shopbd_user');
-          setUser(stored ? JSON.parse(stored) : null);
-        } catch {
-          setUser(null);
-        }
-      });
-
-    const handleAuthChange = () => {
-      try {
-        const stored = localStorage.getItem('shopbd_user');
-        setUser(stored ? JSON.parse(stored) : null);
-      } catch {
-        setUser(null);
-      }
+    const fetchSession = () => {
+      authApi
+        .getCurrentUser()
+        .then((profile) => setUser(profile))
+        .catch(() => setUser(null));
     };
 
-    window.addEventListener('auth-change', handleAuthChange);
+    fetchSession();
+
+    window.addEventListener('auth-change', fetchSession);
     return () => {
-      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('auth-change', fetchSession);
     };
   }, []);
 
   const handleLogout = async () => {
     try {
-      await authApi.logoutUser();
-    } catch {
-      // Proceed with client logout regardless
+      await authApi.logoutSession();
+      try {
+        const { signOut, auth } = await import('@/lib/firebase/client');
+        await signOut(auth);
+      } catch {
+        // Ignore firebase client signout errors if offline
+      }
+      await authApi.logoutUser().catch(() => {});
     } finally {
-      localStorage.removeItem('shopbd_user');
       setUser(null);
       setIsOpen(false);
       window.dispatchEvent(new Event('auth-change'));
